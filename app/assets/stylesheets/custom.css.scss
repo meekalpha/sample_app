@@ -71,6 +71,9 @@ p {
 		color: $gray-light;
 		text-decoration: none;
 	}
+	&:focus {
+		text-decoration: none;
+	}
 };
 
 /* footer */
