@@ -11,6 +11,9 @@ gem 'jbuilder'
 gem 'sdoc', group: :doc
 gem 'guard'
 gem 'bcrypt'
+gem 'faker'
+gem 'will_paginate'
+gem 'bootstrap-will_paginate'
 
 group :development, :test do
   gem 'sqlite3'
