@@ -1,7 +1,11 @@
 class User < ActiveRecord::Base
-	attr_accessor :remember_token
+	attr_accessor 	:remember_token,
+					:activation_token,
+					:reset_token 
 
-	before_save { self.email.downcase! }
+	before_save 	:downcase_email
+	before_create 	:create_activation_digest
+
 	validates :name, presence: true
 	validates :name, length: { maximum: 50 }
 
@@ -23,11 +27,44 @@ class User < ActiveRecord::Base
 		update_attribute(:remember_digest, nil)
 	end	
 
-	def authenticated?(remember_token)
-		return false if remember_digest.nil?
-		BCrypt::Password.new(remember_digest).is_password?(remember_token)
+	def authenticated?(attribute, token)
+		digest = send("#{attribute}_digest")
+		return false if digest.nil?
+		BCrypt::Password.new(digest).is_password?(token)
 	end												
 
+	def activate
+		update_attribute(:activated, true)
+		update_attribute(:activated_at, Time.zone.now)
+	end
+
+	def send_activation_email
+		UserMailer.account_activation(self).deliver_now
+	end
+
+	def create_reset_digest
+		self.reset_token = User.new_token
+		update_attribute(:reset_digest, User.digest(reset_token))
+		update_attribute(:reset_sent_at, Time.zone.now)
+	end
+
+	def send_password_reset_email
+		UserMailer.password_reset(self).deliver_now
+	end
+
+	def password_reset_expired?
+		reset_sent_at < 2.hours.ago
+	end
+
+	private
+		def create_activation_digest
+			self.activation_token = User.new_token
+			self.activation_digest = User.digest(activation_token)
+		end
+
+		def downcase_email
+			self.email.downcase!
+		end
 	class << self
 		def digest(string)
 			cost = ActiveModel::SecurePassword.min_cost ? 	BCrypt::Engine::MIN_COST :
