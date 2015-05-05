@@ -69,4 +69,42 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
 		assert_not flash.empty?
 		assert_redirected_to user
 	end
+
+	test "expired token" do
+		get new_password_reset_path
+		post password_resets_path, password_reset: { email: @user.email }
+
+		@user = assigns(:user)
+		@user.update_attribute(:reset_sent_at, 3.hours.ago)
+		patch password_reset_path(@user.reset_token),
+			email: @user.email,
+			user: { password: 				"foobar",
+					password_confirmation: 	"foobar" }
+
+		assert_redirected_to new_password_reset_path
+		assert_not flash.empty?
+	end
+
+	test "token can't be used twice" do
+		get new_password_reset_path
+		post password_resets_path, password_reset: { email: @user.email }
+		@user = assigns(:user)
+		patch password_reset_path(@user.reset_token),
+			email: @user.email,
+			user: { password: 				"foobar",
+					password_confirmation: 	"foobar" }
+		
+		assert is_logged_in?
+		delete logout_path
+		assert_not is_logged_in?
+
+		patch password_reset_path(@user.reset_token),
+			email: @user.email,
+			user: { password: 				"password",
+					password_confirmation: 	"password" }
+
+		assert_not is_logged_in?
+		assert_redirected_to root_url
+
+	end
 end

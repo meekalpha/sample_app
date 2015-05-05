@@ -1,7 +1,7 @@
 class PasswordResetsController < ApplicationController
-  before_action :get_user, 			only: [:edit, :update]
-  before_action :valid_user, 		only: [:edit, :update]
-  before_action :check_expiration, 	only: [:edit, :update]
+  before_action :get_user, 			     only: [:edit, :update]
+  before_action :valid_user, 		     only: [:edit, :update]
+  before_action :check_expiration, 	 only: [:edit, :update]
 
   def new
   end
@@ -28,6 +28,7 @@ class PasswordResetsController < ApplicationController
   		render 'edit'
   	elsif @user.update_attributes(user_params)
   		log_in @user
+      @user.update_attributes({ reset_digest: nil, reset_sent_at: nil })
   		flash[:success] = "Password has been reset"
   		redirect_to @user
   	else
