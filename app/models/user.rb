@@ -1,4 +1,6 @@
 class User < ActiveRecord::Base
+	has_many :microposts, dependent: :destroy
+
 	attr_accessor 	:remember_token,
 					:activation_token,
 					:reset_token 
@@ -52,6 +54,10 @@ class User < ActiveRecord::Base
 
 	def password_reset_expired?
 		reset_sent_at < 2.hours.ago
+	end
+
+	def feed
+		Micropost.where("user_id = ?", id)
 	end
 
 	private
